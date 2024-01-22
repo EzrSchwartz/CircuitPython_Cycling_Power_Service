@@ -2,7 +2,7 @@
 CircuitPython Library for extracting power from a power meter.
 This library can be used to extract the power value in watts 
 This was created by Ezra Schwartz
-It was tested with a Quarq Power Meter and was returning the same values that where found on the wahoo cycling computer that was connected to the power meter at the time of testing. 
+It was tested with a Quarq Power Meter and was returning the same values that were found on the wahoo cycling computer that was connected to the power meter at the time of testing. 
 
 
 The power_Values function will return the power value that is sent in the packet
