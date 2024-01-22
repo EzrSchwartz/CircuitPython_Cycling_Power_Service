@@ -37,6 +37,7 @@ CPMeasurementValues = namedtuple(
     "CPMeasurementValues",
     (
         "value"
+        "ByteArray"
     ),
 )
 
@@ -74,32 +75,31 @@ class CyclingPowerService(Service):
             self._measurement_buf[i] = 0
 
         packet_length = self.cp_measurement.readinto(self._measurement_buf)
-        if packet_length == 0:
-            return None
+        if packet_length > 0:
+            
 #find the byte pair for power and return it
-        for i in range(0, len(self._measurement_buf), 2):
-            if i + 2 <= len(self._measurement_buf):
-                if(i == 2):
-                    value = struct.unpack_from('<H', self._measurement_buf, i)[0]
-                    return value
-                else:
-                    continue
+            for i in range(0, len(self._measurement_buf), 2):
+                if i + 2 <= len(self._measurement_buf):
+                    if(i == 2):
+                        value = struct.unpack_from('<H', self._measurement_buf, i)[0]
+                        return value
+                    else:
+                        continue
 
 
 
     @property
     def byte_array(self) -> Optional[CPMeasurementValues]: #returns the raw Byte Array from the packet
+            # Clear the buffer
+    
         if self._measurement_buf is None:
             self._measurement_buf = bytearray(self.cp_measurement.incoming_packet_length)
 
-    # Clear the buffer
-        for i in range(len(self._measurement_buf)):
-            self._measurement_buf[i] = 0
+
 
         packet_length = self.cp_measurement.readinto(self._measurement_buf)
-        if packet_length == 0:
-            return None
-#set Byte Array Value
+
+        
         ByteArray = ''.join('{:02x}'.format(x) for x in self._measurement_buf)
 
         return ByteArray
