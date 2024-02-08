@@ -1,26 +1,35 @@
-'''
-CircuitPython Library for extracting power from a power meter.
-This library can be used to extract the power value in watts 
-This was created by Ezra Schwartz
-It was tested with a Quarq Power Meter and was returning the same values that were read from the wahoo cycling computer that was connected to the power meter at the time of testing. 
+# SPDX-FileCopyrightText: 2017 Scott Shawcroft, written for Adafruit Industries
+# SPDX-FileCopyrightText: Copyright (c) 2024 Ezra Schwartz
+#
+# SPDX-License-Identifier: MIT
+"""
+`cycling_power_service`
+================================================================================
+
+Cycling Power data is a library to help people use cycing power meters in their circuitpython code. This library allows users to extract power data from a power meter and read the data. The librarys goal is to make it more acessable to create projects involving power meters by streamlining the process of extracting the data from a power meter's bluetooth packet.
 
 
-The power_Values function will return the power value that is sent in the packet
+* Author(s): Ezra Schwartz
 
-The ByteArray function will return the raw data from the packet.
+Implementation Notes
+--------------------
+
+**Hardware:**
+
+Adafruit ItsyBitsy nRF52840 Express - Bluetooth LE <https://www.adafruit.com/product/4481>
+
+**Software and Dependencies:**
+
+* Adafruit CircuitPython firmware for the supported boards:
+  https://circuitpython.org/downloads
 
 
-Example Usage:
 
-        power_sensor = ble.connect(advertisement)
+# * Adafruit's Bus Device library: https://github.com/adafruit/Adafruit_CircuitPython_BusDevice
+# * Adafruit's Register library: https://github.com/adafruit/Adafruit_CircuitPython_Register
+"""
 
-        power_service = power_sensor[CyclingPowerService]
-        
-        print(power_service.power_Value)
-
-
-'''
-
+# imports
 import struct
 from collections import namedtuple
 import _bleio
@@ -33,6 +42,16 @@ try:
 except ImportError:
     pass
 
+
+
+__version__ = "0.0.0-auto.0"
+__repo__ = "https://github.com/EzrSchwartz/CircuitPython_Cycling_Power_Service.git"
+
+
+
+
+
+
 CPMeasurementValues = namedtuple(
     "CPMeasurementValues",
     (
@@ -41,9 +60,11 @@ CPMeasurementValues = namedtuple(
     ),
 )
 
+
 class _CPMeasurement(ComplexCharacteristic):
     """Notify-only characteristic of power data."""
     uuid = StandardUUID(0x2A63)
+
     def __init__(self) -> None:
         super().__init__(properties=Characteristic.NOTIFY)
 
@@ -54,9 +75,10 @@ class _CPMeasurement(ComplexCharacteristic):
         # Use a PacketBuffer to receive the CPS data
         return _bleio.PacketBuffer(bound_characteristic, buffer_size=1)
 
+
 class CyclingPowerService(Service):
     """Service for reading from a Cycling Power sensor."""
-    uuid = StandardUUID(0x1818)  
+    uuid = StandardUUID(0x1818)
 
     cp_measurement = _CPMeasurement()
 
@@ -65,7 +87,7 @@ class CyclingPowerService(Service):
         self._measurement_buf = None
 
     @property
-    def power_Value(self) -> Optional[CPMeasurementValues]:  #returns the power value
+    def power_Value(self) -> Optional[CPMeasurementValues]:  # returns the power value
 
         if self._measurement_buf is None:
             self._measurement_buf = bytearray(self.cp_measurement.incoming_packet_length)
@@ -76,35 +98,26 @@ class CyclingPowerService(Service):
 
         packet_length = self.cp_measurement.readinto(self._measurement_buf)
         if packet_length > 0:
-            
-#find the byte pair for power and return it
+
+            # find the byte pair for power and return it
             for i in range(0, len(self._measurement_buf), 2):
                 if i + 2 <= len(self._measurement_buf):
-                    if(i == 2):
+                    if (i == 2):
                         value = struct.unpack_from('<H', self._measurement_buf, i)[0]
                         return value
                     else:
                         continue
 
-
-
     @property
-    def byte_array(self) -> Optional[CPMeasurementValues]: #returns the raw Byte Array from the packet
-            # Clear the buffer
-    
+    def byte_array(self) -> Optional[CPMeasurementValues]:  # returns the raw Byte Array from the packet
+        # Clear the buffer
+
         if self._measurement_buf is None:
             self._measurement_buf = bytearray(self.cp_measurement.incoming_packet_length)
 
-
-
         packet_length = self.cp_measurement.readinto(self._measurement_buf)
 
-        
         ByteArray = ''.join('{:02x}'.format(x) for x in self._measurement_buf)
 
         return ByteArray
-        
-
-
-
 
